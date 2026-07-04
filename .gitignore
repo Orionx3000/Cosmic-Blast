@@ -1,0 +1,26 @@
+node_modules/
+*.py
+*.pyc
+*.zip
+BUILD_SESSION.txt
+cosmicblast-release-key.keystore
+apk-build/
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/*.iml
+.idea/
+*.log
+logcat.txt
+en_search_results.txt
+js_logs*.txt
+
+# backup / temp / test files
+test_*.js
+www/js/main_WORKING.js
+www/js/main_rm_updateBoss.js
+www/js/main_rm_updateBossSwarm.js
+www/js/main_rm_updateMiniBosses.js
+www/js/main_test.js
+www/server.js

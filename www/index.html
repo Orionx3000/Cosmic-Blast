@@ -1,0 +1,544 @@
+﻿<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+
+<meta name="theme-color" content="#05050a">
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+
+<meta http-equiv="Pragma" content="no-cache">
+
+<meta http-equiv="Expires" content="0">
+
+<title>Cosmic Blast Optimized After</title>
+
+<link rel="manifest" href="manifest.json">
+
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
+<script src="pixi.min.js"></script>
+
+<style>
+
+* { box-sizing:border-box; }
+
+html,body { margin:0;padding:0;width:100%;height:100%;overflow:hidden;position:fixed;inset:0;overscroll-behavior:none;-webkit-overflow-scrolling:none;background:#05050a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation; }
+
+#game { position:absolute;top:0;left:0;width:100%;height:100%; }
+canvas { display:block;width:100% !important;height:100% !important; }
+
+#ui { position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10; }
+
+#scoreDisplay { position:absolute;top:44px;left:50%;transform:translateX(-50%);font-size:2.8rem;font-weight:900;color:#fff;text-shadow:0 0 8px #0ff,0 0 20px #0ff,0 0 40px #0ff;transition:transform 0.08s ease; }
+
+#scoreDisplay.pop { transform:translateX(-50%) scale(1.25); }
+
+#healthBar { position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:180px;height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);box-shadow:0 0 8px rgba(0,255,255,0.2); }
+
+#healthFill { height:100%;width:100%;background:linear-gradient(90deg,#0ff,#88ffcc);border-radius:5px;transition:width 0.2s ease; }
+
+#healthLabel { position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-size:0.75rem;font-weight:700;color:#0ff;letter-spacing:1px;text-transform:uppercase;text-shadow:0 0 8px #0ff,0 0 16px #0ff; }
+
+#weaponLabel { position:absolute;bottom:82px;left:50%;transform:translateX(-50%);font-size:0.65rem;color:#fff;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 8px rgba(255,255,255,0.5),0 0 0 1px rgba(255,255,255,0.8);-webkit-text-stroke:1px rgba(255,255,255,0.5);opacity:0;transition:opacity 0.3s; }
+
+#instructions { position:absolute;bottom:70px;left:50%;transform:translateX(-50%);font-size:0.75rem;color:#888;text-shadow:1px 1px 2px #000;text-align:center;opacity:1;transition:opacity 0.8s;white-space:nowrap;pointer-events:none; }
+
+#waveDisplay { position:absolute;top:30px;left:10px;font-size:0.85rem;color:#66f;text-transform:uppercase;letter-spacing:2px;text-shadow:0 0 8px #66f; }
+
+#weaponAmmoDisplay { position:absolute;top:52px;left:10px;font-size:0.6rem;color:#aaa;letter-spacing:1px;text-shadow:0 0 6px #444;display:none; }
+
+#bossBarOuter { position:absolute;top:62px;left:50%;transform:translateX(-50%);width:220px;height:8px;background:rgba(255,0,0,0.12);border-radius:4px;overflow:hidden;border:1px solid rgba(255,0,0,0.2);display:none; }
+
+#bossBarFill { height:100%;width:100%;background:linear-gradient(90deg,#ff0044,#ff8800,#ffff00);border-radius:4px;transition:width 0.12s ease; }
+
+#bossLabel { position:absolute;top:52px;left:50%;transform:translateX(-50%);font-size:0.5rem;color:#f44;letter-spacing:2px;text-transform:uppercase;display:none; }
+
+.overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:#05050a;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;pointer-events:auto; }
+
+.overlay.show { display:flex; }
+
+
+
+
+.overlay h1 { font-size:2.4rem;margin:0 0 4px;letter-spacing:3px;text-shadow:0 0 20px #0ff,0 0 60px #0ff;color:#fff; }
+
+.overlay h1 .accent { color:#0ff; }
+
+.overlay h2 { color:#88f;font-size:0.8rem;margin:0 0 14px;font-weight:400;text-transform:uppercase;letter-spacing:2px; }
+
+.overlay .big-score { color:#0ff;font-size:3rem;font-weight:900;text-shadow:0 0 30px #0ff; }
+
+.overlay .sub { color:#ccc;font-size:0.8rem;margin:2px 0; }
+
+.tap-next { color:#fff;font-size:0.95rem;margin-top:12px;animation:pulse 1.5s ease-in-out infinite;cursor:pointer;pointer-events:auto; }
+
+#weaponDial { position:absolute;left:2px;width:62px;z-index:15;pointer-events:auto;display:none;touch-action:none;background:radial-gradient(ellipse 70px 100% at 0% 50%,rgba(235,225,215,0.2) 0%,rgba(210,200,190,0.06) 60%,transparent 100%);border-radius:6px;overflow:visible; }
+
+.weapon-dial-item { position:absolute;touch-action:none;cursor:pointer;will-change:transform;text-align:center;white-space:nowrap; }
+
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+.btn { background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:0.9rem;padding:10px 24px;margin:4px;cursor:pointer;pointer-events:auto;min-width:120px;text-align:center; }
+
+.btn:hover,.btn:active { background:rgba(255,255,255,0.15); }
+
+.btn-easy { border-color:#44ff88;color:#44ff88;background:rgba(68,255,136,0.08); }
+
+.btn-easy:hover,.btn-easy:active { background:rgba(68,255,136,0.2); }
+
+.btn-normal { border-color:#4488ff;color:#4488ff;background:rgba(68,136,255,0.08); }
+
+.btn-normal:hover,.btn-normal:active { background:rgba(68,136,255,0.2); }
+
+.btn-hard { border-color:#ff4444;color:#ff4444;background:rgba(255,68,68,0.08); }
+
+.btn-hard:hover,.btn-hard:active { background:rgba(255,68,68,0.2); }
+
+.btn-pause { font-size:1rem;padding:14px 32px;min-width:160px;margin:6px;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);border-radius:10px; }
+
+.btn-pause:hover,.btn-pause:active { background:rgba(255,255,255,0.2);transform:scale(1.05); }
+
+.btn-pause:active { transform:scale(0.97); }
+
+.pop { animation:scorePop 0.25s ease-out; }
+
+@keyframes scorePop { 0%{color:#fff;text-shadow:0 0 8px #0ff,0 0 20px #0ff,0 0 40px #0ff} 40%{color:#ff0;text-shadow:0 0 12px #ff0,0 0 30px #ff0,0 0 60px #0ff} 100%{color:#fff;text-shadow:0 0 8px #0ff,0 0 20px #0ff,0 0 40px #0ff} }
+
+
+
+@keyframes crawlScroll { 0% { bottom: 0%; opacity: 1; } 80% { opacity: 1; } 100% { bottom: 150%; opacity: 0; } }
+
+
+
+/* NEON UI OVERRIDES */
+
+button, .btn {
+
+    background: rgba(0, 255, 255, 0.1) !important;
+
+    border: 2px solid #0ff !important;
+
+    color: #0ff !important;
+
+    font-family: 'Orbitron', sans-serif !important;
+
+    text-shadow: 0 0 5px #0ff !important;
+
+    box-shadow: 0 0 10px rgba(0,255,255,0.3), inset 0 0 10px rgba(0,255,255,0.2) !important;
+
+    border-radius: 4px !important;
+
+    text-transform: uppercase !important;
+
+    letter-spacing: 2px !important;
+
+    transition: all 0.2s ease !important;
+
+}
+
+button:active, .btn:active {
+
+    background: rgba(0, 255, 255, 0.3) !important;
+
+    box-shadow: 0 0 20px rgba(0,255,255,0.6), inset 0 0 20px rgba(0,255,255,0.4) !important;
+
+}
+
+
+
+#title {
+
+    font-family: 'Orbitron', sans-serif !important;
+
+    color: #ff88cc !important;
+
+    text-shadow: 0 0 10px #ff44aa, 0 0 20px #ff44aa, 0 0 40px #ff8800 !important;
+
+    letter-spacing: 4px !important;
+
+}
+
+
+
+#titleScreenOverlay h1 {
+
+    font-family: 'Orbitron', sans-serif !important;
+
+    color: #ffd700 !important;
+
+    text-shadow: 0 0 10px #ff8800, 0 0 20px #ff4400, 0 0 40px #ff00aa, 0 0 60px #ff00aa !important;
+
+    letter-spacing: 6px !important;
+
+}
+
+
+
+#titleScreenOverlay h1 .outline-blast {
+
+    color: #ffffff !important;
+
+    text-shadow: 0 0 10px #ffd700, 0 0 20px #ff8800, 0 0 40px #ff00aa, 0 0 60px #ff00aa !important;
+
+}
+
+
+
+.panel, #startScreen, #pauseScreen, #gameoverScreen, #upgradeScreen, #difficultyScreen {
+
+    background: rgba(5, 5, 10, 0.85) !important;
+
+    border: 1px solid #f0f !important;
+
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.2) !important;
+
+    backdrop-filter: blur(4px) !important;
+
+}
+
+
+
+h1, h2, h3 {
+
+    font-family: 'Orbitron', sans-serif !important;
+
+    text-transform: uppercase;
+
+}
+
+
+
+#toastContainer { position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;align-items:center;pointer-events:none; }
+
+#toastContainer .toast {
+
+    font-family: 'Orbitron', sans-serif !important;
+
+    font-weight: bold;
+
+    text-shadow: 0 0 5px currentColor, 0 0 10px currentColor !important;
+
+    background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.3);padding:8px 20px;border-radius:4px;margin-bottom:6px;font-size:0.9rem;color:#0ff;animation:toastIn 0.3s ease;white-space:nowrap;
+
+}
+
+@keyframes toastIn { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+
+
+
+
+
+.btn-diff {
+
+    background: rgba(255, 0, 255, 0.2) !important;
+
+    border: 2px solid #0ff !important;
+
+    color: #0ff !important;
+
+    width: 240px !important;
+
+    text-align: center;
+
+    box-sizing: border-box;
+
+    padding: 14px 24px !important;
+
+    margin: 8px !important;
+
+    transition: all 0.1s ease;
+
+}
+
+.btn-diff.selected {
+
+    background: rgba(0, 255, 255, 0.35) !important;
+
+    border-color: #ffd700 !important;
+
+    color: #ffd700 !important;
+
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.2) !important;
+
+}
+
+
+
+/* SCI-FI CRAWL CSS - same bg.png as title so it looks like one continuous screen */
+
+#crawlOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 2000; perspective: 400px; background: url('img/bg.png') no-repeat center center; background-size: cover; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 15%; display: none; }
+
+#crawlOverlay.show { display: flex; }
+
+#crawlContainer { position: relative; width: 100%; height: 80%; display: flex; justify-content: center; transform-origin: 50% 100%; transform: rotateX(8deg); }
+
+#crawlText { position: absolute; bottom: 0%; width: 80%; color: #ffd700; font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: bold; text-align: center; line-height: 1.8; text-shadow: 0 0 10px #ff8800, 0 0 20px #ff4400, 0 0 40px #ff00aa; animation: crawlScroll 45s linear forwards; }
+
+#crawlText p { margin-bottom: 1.5rem; }
+
+
+
+</style>
+
+
+
+
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Damion&family=Monoton&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+  <div id="damageOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; z-index:9000; transition: background 0.2s;"></div>
+
+  
+
+  
+
+  <div id="titleScreenOverlay" class="overlay show" style="background: url('img/bg.png') no-repeat center center; background-size: cover;">
+
+    <div style="position:absolute; top:30%; left:0; right:0; text-align:center; z-index:2500;">
+
+      <h1 style="font-size: 3.5rem;">COSMIC<br><span class="outline-blast">BLAST</span></h1>
+
+      <button class="btn btn-pause" id="startGameBtn" style="margin-top: 40px; font-size: 1.5rem; border-color:#00ffaa;color:#00ffaa;background:rgba(0,255,170,0.1);touch-action:manipulation;">START</button>
+
+    </div>
+
+  </div>
+
+
+
+
+
+  <div id="crawlOverlay" class="overlay">
+
+    <div id="crawlContainer">
+
+      <div id="crawlText">
+
+      <p>...You awaken to alarms blaring as the cryopods mist clears around you.</p>
+
+      <p>The ship is under attack!</p>
+
+      <p>300,000 souls in stasis on the generation ship Lierla and its your job to keep them safe.</p>
+
+      <p>Man the canon and confront this incoming onslaught of Xenus and their flying saucers...</p>
+
+    </div>
+
+    </div>
+
+    <div class="btn" id="skipCrawlBtn" style="position:absolute; bottom: 20px; z-index: 1000; padding:15px; width:100%; text-align:center;">SKIP</div>
+
+  </div>
+
+
+
+<div id="ui">
+
+    <div id="waveDisplay">Wave 1</div>
+
+    <div id="weaponAmmoDisplay"></div>
+
+    <div id="diffLabel" style="position:absolute;top:12px;right:10px;font-size:0.5rem;color:#555;text-transform:uppercase;letter-spacing:1px;">NORMAL</div>
+
+    <div id="bossLabel">BOSS</div>
+
+    <div id="bossBarOuter"><div id="bossBarFill"></div></div>
+
+    <div id="scoreDisplay">0</div>
+
+    <div id="healthLabel">shield</div>
+
+    <div id="healthBar"><div id="healthFill"></div></div>
+
+    <div id="specialShieldLabel" style="position:absolute;bottom:56px;left:50%;transform:translateX(-50%);font-size:0.55rem;color:#ff88ff;letter-spacing:1px;text-shadow:0 0 6px #ff44ff;"></div>
+
+    <div id="hullLabel" style="position:absolute;bottom:44px;left:50%;transform:translateX(-50%);font-size:0.9rem;font-weight:900;color:#fff;text-shadow:0 0 6px #00ff00, 2px 2px 4px #000;white-space:nowrap;letter-spacing:1px;">HULL: 100%</div>
+
+    <div id="peopleLabel" style="position:absolute;bottom:64px;left:50%;transform:translateX(-50%);font-size:0.9rem;font-weight:900;color:#fff;text-shadow:0 0 6px #00aaff, 2px 2px 4px #000;white-space:nowrap;letter-spacing:1px;">PEOPLE: 500,000</div>
+
+    <div id="weaponLabel"></div>
+
+    <div id="comboDisplay" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:1.4rem;font-weight:900;color:#ffd700;text-shadow:0 0 10px #ff8800,0 0 20px #ff4400,0 0 40px #ff00aa;pointer-events:none;z-index:11;opacity:0;transition:opacity 0.15s;"></div>
+
+    <div id="instructions">Slide side to side to aim — hold to fire</div>
+
+    <div id="pauseBtn" style="position:absolute;top:46px;right:14px;font-size:0.8rem;font-weight:900;color:#fff;text-shadow:0 0 8px #0ff,0 0 20px #0ff,0 0 40px #0ff;pointer-events:auto;touch-action:manipulation;cursor:pointer;z-index:20;padding:2px 6px;user-select:none;">⏸</div>
+
+    <div id="weaponDial"></div>
+
+  </div>
+
+  
+
+  <div id="orientationLock" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#05050a;color:#fff;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;text-align:center;flex-direction:column;">
+
+    <div style="font-size:2rem;margin-bottom:12px;transform:rotate(90deg);">📱</div>
+
+    <div style="font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 10px #0ff;">Rotate to Portrait</div>
+
+    <div style="font-size:0.6rem;color:#888;margin-top:6px;">Landscape disabled during gameplay</div>
+
+  </div>
+
+  <div id="game"></div>
+
+  <div id="damageFlash" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;opacity:0;transition:opacity 0.08s;"></div>
+
+<div id="diffOverlay" class="overlay">
+
+    <h1>COSMIC <span class="outline-blast">BLAST</span></h1>
+
+    <h2>select difficulty</h2>
+
+    <div id="continueContainer" style="display:none; margin-bottom: 20px;">
+
+      <div class="btn btn-diff" id="continueBtn" style="padding: 8px 16px !important; min-width: 160px !important; font-size: 0.8rem; background: rgba(0, 255, 255, 0.1) !important; border-color: #f0f !important; color: #f0f !important;">CONTINUE SAVED GAME</div>
+
+      <div class="sub" id="continueInfo" style="font-size:0.55rem;opacity:0.6;margin-top:4px;"></div>
+
+    </div>
+    <select id="diffSelect" style="background:rgba(255,255,255,0.1);color:#fff;border:2px solid #0ff;border-radius:8px;padding:12px 24px;font-size:1rem;font-family:'Orbitron',sans-serif;margin:8px;width:240px;text-align:center;text-align-last:center;-webkit-appearance:none;appearance:none;cursor:pointer;">
+      <option value="easy">EASY</option>
+      <option value="normal" selected>NORMAL</option>
+      <option value="hard">HARD</option>
+      <option value="hardcore">HARDCORE</option>
+    </select>
+
+    <div class="btn btn-diff" id="startGameBtn2" style="border-color:#00ffaa;color:#00ffaa;background:rgba(0,255,170,0.15);margin-top:16px;">START GAME</div>
+
+    <div class="sub" style="margin-top:12px;font-size:0.6rem;">Slide to aim - hold to fire</div>
+    <div style="position:fixed;bottom:8px;left:0;width:100%;text-align:center;font-size:0.45rem;color:rgba(255,255,255,0.3);pointer-events:auto;"><a href="https://plaidphasecomputing.com/privacy2" target="_blank" style="color:rgba(255,255,255,0.3);text-decoration:none;">Privacy Policy</a></div>
+  </div>
+
+
+
+  <div id="encounterOverlay" class="overlay" style="background:transparent;pointer-events:auto;">
+
+    <h1 style="font-size:1.6rem;margin-bottom:8px;">NEUTRAL <span class="outline-blast">ENCOUNTER</span></h1>
+
+    <div id="encounterName" style="font-size:0.9rem;color:#88f;margin-bottom:4px;letter-spacing:2px;text-transform:uppercase;"></div>
+
+    <div id="encounterLore" style="max-width:300px;font-size:0.7rem;color:#aaa;margin-bottom:12px;text-align:center;line-height:1.4;padding:0 16px;"></div>
+
+    <div id="encounterScore" style="font-size:0.8rem;color:#ffd700;margin-bottom:10px;letter-spacing:1px;"></div>
+
+    <div class="btn" id="btnBuyShield" style="min-width:200px;font-size:0.75rem;">Max Shield +1 (Cost: 2,000)</div>
+
+    <div class="btn" id="btnBuyWeapon" style="min-width:200px;font-size:0.75rem;">Random Special Weapon (Cost: 500)</div>
+
+    <div class="btn" id="btnRepairHull" style="min-width:200px;font-size:0.75rem;">Repair Hull (+50) (Cost: 200)</div>
+
+    <div class="btn" id="btnLeaveEncounter" style="min-width:200px;font-size:0.75rem;border-color:#f0f;color:#f0f;margin-top:8px;">CONTINUE</div>
+
+  </div>
+
+
+
+  <div id="pauseOverlay" class="overlay">
+
+    <h1>PAUSED</h1>
+
+    <div class="btn btn-pause" id="resumeBtn" style="border-color:#0ff;color:#0ff;background:rgba(0,255,255,0.2);">▶  RESUME</div>
+
+    <div class="btn btn-pause" id="mainMenuBtn" style="margin-top:8px;border-color:#ff8800;color:#ff8800;background:rgba(255,136,0,0.1);">⟳  MAIN MENU</div>
+
+    <div class="btn btn-pause" id="dialToggleBtn" style="margin-top:8px;border-color:#44ddff;color:#44ddff;background:rgba(68,221,255,0.1);font-size:0.85rem;">DIAL: <span id="dialSideLabel">L</span></div>
+
+    <div class="btn btn-pause" id="zoomToggleBtn" style="margin-top:8px;border-color:#44ddff;color:#44ddff;background:rgba(68,221,255,0.1);font-size:0.85rem;">ZOOM: <span id="zoomLabel">2x</span></div>
+
+    <div style="margin-top:15px; color:#0ff; font-family:'Orbitron',sans-serif; text-align:center; text-shadow: 0 0 5px #0ff;">
+
+        <label for="musicVolumePause" style="display:block; margin-bottom:5px; font-size:0.8rem; letter-spacing:1px;">MUSIC VOLUME</label>
+
+        <input type="range" id="musicVolumePause" min="0" max="100" value="20" style="width:80%; accent-color:#f0f;">
+
+    </div>
+
+  </div>
+
+
+
+
+
+  <div id="gameOverOverlay" class="overlay">
+
+    <h1>GAME <span class="outline-blast">OVER</span></h1>
+
+    <div class="big-score" id="finalScore">0</div>
+
+    <div class="sub" id="waveReached"></div>
+
+    <div class="sub" id="timeSurvived"></div>
+
+    <div class="sub" id="gameOverColonists" style="margin-top:4px;"></div>
+
+    <div class="sub" id="gameOverHull" style="margin-top:2px;"></div>
+
+    <div class="btn btn-pause" id="retryBtn" style="margin-top:20px;">PLAY AGAIN</div>
+
+    <div class="btn btn-pause" id="menuFromOverBtn" style="margin-top:8px;border-color:#ff8800;color:#ff8800;background:rgba(255,136,0,0.1);">MAIN MENU</div>
+
+    <div class="btn btn-pause" id="returnToMapBtn" style="margin-top:8px;border-color:#44ff88;color:#44ff88;background:rgba(68,255,136,0.1);">RETURN TO MAP</div>
+
+    <div class="btn btn-pause" id="abandonToMapBtn" style="margin-top:8px;border-color:#ff8844;color:#ff8844;background:rgba(255,136,68,0.1);">ABANDON (2,000 COLONISTS)</div>
+
+    <div class="btn btn-pause" id="gameOverContinueBtn" style="margin-top:8px;display:none;">CONTINUE (1,000 COLONISTS)</div>
+
+  </div>
+
+
+
+  <div id="victoryOverlay" class="overlay">
+
+    <h1>VICTORY</h1>
+
+    <div style="font-size:0.9rem;color:#0ff;margin:10px 0;letter-spacing:2px;text-transform:uppercase;">Destination Planet Reached</div>
+
+    <div class="big-score" id="victoryScore">0</div>
+
+    <div class="sub" id="victoryColonists"></div>
+
+    <div class="sub" id="victoryHull"></div>
+
+    <div class="btn btn-pause" id="victoryRetryBtn" style="margin-top:20px;">PLAY AGAIN</div>
+
+    <div class="btn btn-pause" id="victoryMenuBtn" style="margin-top:8px;border-color:#ff8800;color:#ff8800;background:rgba(255,136,0,0.1);">MAIN MENU</div>
+
+  </div>
+
+<div id="toastContainer"></div>
+
+
+
+<script src="js/audio.js?v=19"></script>
+
+<script src="js/lore.js?v=1"></script>
+
+<script src="js/main.js?v=29"></script>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+

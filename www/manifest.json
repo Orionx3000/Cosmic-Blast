@@ -1,0 +1,13 @@
+{
+  "name": "Cosmic Blast",
+  "short_name": "Blast",
+  "description": "Defend against incoming space crystals with your laser cannon.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#05050a",
+  "theme_color": "#05050a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
