@@ -5699,7 +5699,7 @@ function getWeaponMaxAmmo(type) {
 
   const baseRate = type === 'rapid' ? 0.012 : 0.025;
 
-  const base = Math.floor(getDifficulty().weaponTime / baseRate);
+  const base = Math.floor(getDifficulty().weaponTime / baseRate * (1 + wave * 0.04));
 
   const lvl = specialWeapon === type ? (weaponLevels[type] || 0) : 0;
 
@@ -5715,7 +5715,7 @@ function refillWeapon(type) {
 
   if (w.time) {
 
-    weaponMaxTimerMs = getDifficulty().weaponTime * 1000;
+    weaponMaxTimerMs = getDifficulty().weaponTime * 1000 * (1 + wave * 0.04);
 
     weaponTimerMs = weaponMaxTimerMs;
 
@@ -6939,6 +6939,8 @@ function togglePause() {
     pauseOverlay.classList.remove('show');
 
     pauseBtn.innerText = '⏸';
+
+    if (app && app.ticker && !app.ticker.started) app.ticker.start();
 
   }
 
@@ -15819,7 +15821,7 @@ showContinueOption();
 
 // Capacitor lifecycle: save on pause, stop ticker
 
-try { if (window.Capacitor && Capacitor.Plugins) { const capApp = Capacitor.Plugins.App; if (capApp) { capApp.addListener('pause', () => { if (gameState === 'playing' || gameState === 'map') saveGameState(); if (app && app.ticker) app.ticker.stop(); if (window.bgmEngine) window.bgmEngine.stop(); }); capApp.addListener('resume', () => { if (gameState === 'playing' || gameState === 'map') { if (app && app.ticker) app.ticker.start(); if (window.bgmEngine) window.bgmEngine.start(); } }); } } } catch(e) { console.error('Capacitor lifecycle', e); }
+try { if (window.Capacitor && Capacitor.Plugins) { const capApp = Capacitor.Plugins.App; if (capApp) { capApp.addListener('pause', () => { if (gameState === 'playing' || gameState === 'map') saveGameState(); if (app && app.ticker) app.ticker.stop(); if (window.bgmEngine) window.bgmEngine.stop(); }); capApp.addListener('resume', () => { if (gameState === 'playing' || gameState === 'map' || gameState === 'paused') { if (app && app.ticker) app.ticker.start(); if (window.bgmEngine) window.bgmEngine.start(); } }); } } } catch(e) { console.error('Capacitor lifecycle', e); }
 
 
 
